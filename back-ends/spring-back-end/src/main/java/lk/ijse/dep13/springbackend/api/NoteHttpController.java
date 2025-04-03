@@ -10,6 +10,9 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/notes")
@@ -39,19 +42,48 @@ public class NoteHttpController {
     }
 
     @GetMapping
-    public String getAllNotes(){
-        return "Get all notes";
+    public List<Note> getAllNotes(@SessionAttribute("user") String email) throws SQLException {
+        if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                "This operation only supports for authenticated users");
+        try(var stm = connection.prepareStatement("SELECT * FROM note WHERE \"user\" =?")){
+            LinkedList<Note> noteList = new LinkedList<>();
+            stm.setString(1, email);
+            ResultSet rst = stm.executeQuery();
+            while (rst.next()) {
+                int id = rst.getInt("id");
+                String text = rst.getString("text");
+                String color = rst.getString("color");
+                noteList.add(new Note(id, text, color));
+            }
+            return noteList;
+        }
     }
 
     @GetMapping("/{id:^\\d+$}")
-    public String getNote(@PathVariable Integer id){
-        return "Get note " + id;
+    public Note getNote(@PathVariable Integer id, @SessionAttribute("user") String email) throws SQLException {
+        if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                "This operation only supports for authenticated users");
+        try(var stm = connection.prepareStatement("SELECT * FROM note WHERE id=? AND \"user\"=?")){
+            stm.setInt(1, id);
+            stm.setString(2, email);
+            ResultSet rst = stm.executeQuery();
+            if (!rst.next()) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            String text = rst.getString("text");
+            String color = rst.getString("color");
+            return new Note(id, text, color);
+        }
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id:^\\d+$}")
-    public String deleteNote(@PathVariable Integer id){
-        return "Delete note " + id;
+    public void deleteNote(@PathVariable Integer id, @SessionAttribute("user") String email) throws SQLException {
+        if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                "This operation only supports for authenticated users");
+        try(var stm = connection.prepareStatement("DELETE FROM note WHERE id=? AND \"user\"=?")){
+            stm.setInt(1, id);
+            stm.setString(2, email);
+            stm.executeUpdate();
+        }
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
