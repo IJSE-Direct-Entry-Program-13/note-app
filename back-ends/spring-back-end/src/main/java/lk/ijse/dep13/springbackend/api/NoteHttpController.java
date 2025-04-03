@@ -22,9 +22,7 @@ public class NoteHttpController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(consumes = "application/json")
-    public Note createNote(@SessionAttribute(value = "user", required = false) String email, @RequestBody Note note) throws SQLException {
-        if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                "This operation only supports for authenticated users");
+    public Note createNote(@SessionAttribute("user") String email, @RequestBody Note note) throws SQLException {
         try (var stm = connection
                 .prepareStatement("INSERT INTO note (text, \"user\", color) VALUES (?, ?, ?)",
                         Statement.RETURN_GENERATED_KEYS)) {
@@ -41,9 +39,7 @@ public class NoteHttpController {
     }
 
     @GetMapping
-    public List<Note> getAllNotes(@SessionAttribute(value = "user", required = false) String email) throws SQLException {
-        if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                "This operation only supports for authenticated users");
+    public List<Note> getAllNotes(@SessionAttribute("user") String email) throws SQLException {
         try (var stm = connection.prepareStatement("SELECT * FROM note WHERE \"user\" =?")) {
             LinkedList<Note> noteList = new LinkedList<>();
             stm.setString(1, email);
@@ -59,9 +55,7 @@ public class NoteHttpController {
     }
 
     @GetMapping("/{id:^\\d+$}")
-    public Note getNote(@PathVariable Integer id, @SessionAttribute(value = "user", required = false) String email) throws SQLException {
-        if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                "This operation only supports for authenticated users");
+    public Note getNote(@PathVariable Integer id, @SessionAttribute("user") String email) throws SQLException {
         try (var stm = connection.prepareStatement("SELECT * FROM note WHERE id=? AND \"user\"=?")) {
             stm.setInt(1, id);
             stm.setString(2, email);
@@ -75,9 +69,7 @@ public class NoteHttpController {
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id:^\\d+$}")
-    public void deleteNote(@PathVariable Integer id, @SessionAttribute(value = "user", required = false) String email) throws SQLException {
-        if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                "This operation only supports for authenticated users");
+    public void deleteNote(@PathVariable Integer id, @SessionAttribute("user") String email) throws SQLException {
         try (var stm = connection.prepareStatement("DELETE FROM note WHERE id=? AND \"user\"=?")) {
             stm.setInt(1, id);
             stm.setString(2, email);
@@ -87,10 +79,8 @@ public class NoteHttpController {
 
     @PatchMapping(value = "/{id:^\\d+$}", consumes = "application/json")
     public Note updateNote(@PathVariable Integer id,
-                           @SessionAttribute(value = "user", required = false) String email,
+                           @SessionAttribute("user") String email,
                            @RequestBody Note note) throws SQLException {
-        if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                "This operation only supports for authenticated users");
         try (var stm = connection
                 .prepareStatement("UPDATE note SET text=?, color=? WHERE id=? AND \"user\"=?")) {
             stm.setString(1, note.getText());

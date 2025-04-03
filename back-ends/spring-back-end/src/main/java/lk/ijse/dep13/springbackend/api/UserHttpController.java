@@ -46,8 +46,7 @@ public class UserHttpController {
     }
 
     @GetMapping("/me")
-    public User getUserInfo(@SessionAttribute(value = "user", required = false) String email) throws SQLException {
-        if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email");
+    public User getUserInfo(@SessionAttribute("user") String email) throws SQLException {
         try (var stm = connection.prepareStatement("SELECT * FROM \"user\" WHERE email=?")) {
             stm.setString(1, email);
             ResultSet rst = stm.executeQuery();
@@ -61,11 +60,10 @@ public class UserHttpController {
     }
 
     @PatchMapping("/me")
-    public User updateUser(@SessionAttribute(value = "user", required = false) String email,
+    public User updateUser(@SessionAttribute("user") String email,
                              @RequestPart("fullName") String fullName,
                              @RequestPart(value = "profilePicture", required = false) Part profilePicture,
                              @RequestPart(value = "password", required = false) String password) throws SQLException, IOException {
-        if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email");
         try (var stm = connection
                 .prepareStatement("UPDATE \"user\" SET full_name=?, profile_picture=?, password=? WHERE email=?");
              var stm2 = connection.prepareStatement("SELECT password FROM \"user\" WHERE email=?")) {
@@ -94,8 +92,7 @@ public class UserHttpController {
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/me")
-    public void deleteUser(@SessionAttribute(value = "user", required = false) String email) throws SQLException {
-        if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email");
+    public void deleteUser(@SessionAttribute("user") String email) throws SQLException {
         try(PreparedStatement stm = connection.prepareStatement("DELETE FROM \"user\" WHERE email=?")){
             stm.setString(1, email);
             stm.executeUpdate();
