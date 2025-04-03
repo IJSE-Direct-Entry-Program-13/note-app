@@ -85,7 +85,6 @@ public class NoteHttpController {
         }
     }
 
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PatchMapping(value = "/{id:^\\d+$}", consumes = "application/json")
     public Note updateNote(@PathVariable Integer id,
                            @SessionAttribute(value = "user", required = false) String email,
