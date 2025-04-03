@@ -5,6 +5,7 @@ import lk.ijse.dep13.springbackend.entity.User;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -83,6 +84,7 @@ public class UserHttpController {
                     Objects.requireNonNullElse(base64DataUrl, User.DEFAULT_PROFILE_PICTURE));
         }
     }
+
     private String generateBase64DataUrl(Part part) throws IOException {
         byte[] bytes = part.getInputStream().readAllBytes();
         String mimeType = part.getContentType();
@@ -92,7 +94,11 @@ public class UserHttpController {
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/me")
-    public String deleteUser() {
-        return "Delete authenticated user account";
+    public void deleteUser(@SessionAttribute("user") String email) throws SQLException {
+        if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email");
+        try(PreparedStatement stm = connection.prepareStatement("DELETE FROM \"user\" WHERE email=?")){
+            stm.setString(1, email);
+            stm.executeUpdate();
+        }
     }
 }
