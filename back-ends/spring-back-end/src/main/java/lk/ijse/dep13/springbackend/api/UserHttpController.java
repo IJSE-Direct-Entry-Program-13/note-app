@@ -61,7 +61,7 @@ public class UserHttpController {
     }
 
     @PatchMapping("/me")
-    public User updateUser(@SessionAttribute("user") String email,
+    public User updateUser(@SessionAttribute(value = "user", required = false) String email,
                              @RequestPart("fullName") String fullName,
                              @RequestPart(value = "profilePicture", required = false) Part profilePicture,
                              @RequestPart(value = "password", required = false) String password) throws SQLException, IOException {
@@ -94,7 +94,7 @@ public class UserHttpController {
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/me")
-    public void deleteUser(@SessionAttribute("user") String email) throws SQLException {
+    public void deleteUser(@SessionAttribute(value = "user", required = false) String email) throws SQLException {
         if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email");
         try(PreparedStatement stm = connection.prepareStatement("DELETE FROM \"user\" WHERE email=?")){
             stm.setString(1, email);

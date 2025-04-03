@@ -10,7 +10,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -23,12 +22,12 @@ public class NoteHttpController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(consumes = "application/json")
-    public Note createNote(@SessionAttribute("user") String email, @RequestBody Note note) throws SQLException {
+    public Note createNote(@SessionAttribute(value = "user", required = false) String email, @RequestBody Note note) throws SQLException {
         if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                 "This operation only supports for authenticated users");
-        try(var stm = connection
+        try (var stm = connection
                 .prepareStatement("INSERT INTO note (text, \"user\", color) VALUES (?, ?, ?)",
-                        Statement.RETURN_GENERATED_KEYS)){
+                        Statement.RETURN_GENERATED_KEYS)) {
             stm.setString(1, note.getText());
             stm.setString(2, email);
             stm.setString(3, note.getColor());
@@ -42,10 +41,10 @@ public class NoteHttpController {
     }
 
     @GetMapping
-    public List<Note> getAllNotes(@SessionAttribute("user") String email) throws SQLException {
+    public List<Note> getAllNotes(@SessionAttribute(value = "user", required = false) String email) throws SQLException {
         if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                 "This operation only supports for authenticated users");
-        try(var stm = connection.prepareStatement("SELECT * FROM note WHERE \"user\" =?")){
+        try (var stm = connection.prepareStatement("SELECT * FROM note WHERE \"user\" =?")) {
             LinkedList<Note> noteList = new LinkedList<>();
             stm.setString(1, email);
             ResultSet rst = stm.executeQuery();
@@ -60,10 +59,10 @@ public class NoteHttpController {
     }
 
     @GetMapping("/{id:^\\d+$}")
-    public Note getNote(@PathVariable Integer id, @SessionAttribute("user") String email) throws SQLException {
+    public Note getNote(@PathVariable Integer id, @SessionAttribute(value = "user", required = false) String email) throws SQLException {
         if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                 "This operation only supports for authenticated users");
-        try(var stm = connection.prepareStatement("SELECT * FROM note WHERE id=? AND \"user\"=?")){
+        try (var stm = connection.prepareStatement("SELECT * FROM note WHERE id=? AND \"user\"=?")) {
             stm.setInt(1, id);
             stm.setString(2, email);
             ResultSet rst = stm.executeQuery();
@@ -76,25 +75,25 @@ public class NoteHttpController {
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id:^\\d+$}")
-    public void deleteNote(@PathVariable Integer id, @SessionAttribute("user") String email) throws SQLException {
+    public void deleteNote(@PathVariable Integer id, @SessionAttribute(value = "user", required = false) String email) throws SQLException {
         if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                 "This operation only supports for authenticated users");
-        try(var stm = connection.prepareStatement("DELETE FROM note WHERE id=? AND \"user\"=?")){
+        try (var stm = connection.prepareStatement("DELETE FROM note WHERE id=? AND \"user\"=?")) {
             stm.setInt(1, id);
             stm.setString(2, email);
-             if (stm.executeUpdate() == 0) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            if (stm.executeUpdate() == 0) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PatchMapping(value = "/{id:^\\d+$}", consumes = "application/json")
     public Note updateNote(@PathVariable Integer id,
-                             @SessionAttribute("user") String email,
-                             @RequestBody  Note note) throws SQLException {
+                           @SessionAttribute(value = "user", required = false) String email,
+                           @RequestBody Note note) throws SQLException {
         if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                 "This operation only supports for authenticated users");
-        try(var stm = connection
-                .prepareStatement("UPDATE note SET text=?, color=? WHERE id=? AND \"user\"=?")){
+        try (var stm = connection
+                .prepareStatement("UPDATE note SET text=?, color=? WHERE id=? AND \"user\"=?")) {
             stm.setString(1, note.getText());
             stm.setString(2, note.getColor());
             stm.setInt(3, id);
