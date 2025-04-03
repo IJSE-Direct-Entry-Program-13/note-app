@@ -5,7 +5,6 @@ import lk.ijse.dep13.springbackend.entity.User;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -61,16 +60,16 @@ public class UserHttpController {
 
     @PatchMapping("/me")
     public User updateUser(@SessionAttribute("user") String email,
-                             @RequestPart("fullName") String fullName,
-                             @RequestPart(value = "profilePicture", required = false) Part profilePicture,
-                             @RequestPart(value = "password", required = false) String password) throws SQLException, IOException {
+                           @RequestPart("fullName") String fullName,
+                           @RequestPart(value = "profilePicture", required = false) Part profilePicture,
+                           @RequestPart(value = "password", required = false) String password) throws SQLException, IOException {
         try (var stm = connection
                 .prepareStatement("UPDATE \"user\" SET full_name=?, profile_picture=?, password=? WHERE email=?");
              var stm2 = connection.prepareStatement("SELECT password FROM \"user\" WHERE email=?")) {
             stm2.setString(1, email);
             ResultSet rst = stm2.executeQuery();
             rst.next();
-            String encryptedPassword = password != null ? DigestUtils.sha256Hex(password):
+            String encryptedPassword = password != null ? DigestUtils.sha256Hex(password) :
                     rst.getString("password");
             String base64DataUrl = profilePicture != null ? generateBase64DataUrl(profilePicture) : null;
             stm.setString(1, fullName);
@@ -93,7 +92,7 @@ public class UserHttpController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/me")
     public void deleteUser(@SessionAttribute("user") String email) throws SQLException {
-        try(PreparedStatement stm = connection.prepareStatement("DELETE FROM \"user\" WHERE email=?")){
+        try (PreparedStatement stm = connection.prepareStatement("DELETE FROM \"user\" WHERE email=?")) {
             stm.setString(1, email);
             stm.executeUpdate();
         }
