@@ -1,5 +1,6 @@
 package lk.ijse.dep13.springbackend.api;
 
+import jakarta.servlet.http.Part;
 import lk.ijse.dep13.springbackend.entity.User;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,10 +8,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Base64;
 import java.util.Objects;
 
 @RestController
@@ -44,7 +47,7 @@ public class UserHttpController {
     @GetMapping("/me")
     public User getUserInfo(@SessionAttribute(value = "user", required = false) String email) throws SQLException {
         if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email");
-        try(var stm = connection.prepareStatement("SELECT * FROM \"user\" WHERE email=?")){
+        try (var stm = connection.prepareStatement("SELECT * FROM \"user\" WHERE email=?")) {
             stm.setString(1, email);
             ResultSet rst = stm.executeQuery();
             rst.next();
@@ -58,8 +61,32 @@ public class UserHttpController {
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PatchMapping("/me")
-    public String updateUser() {
-        return "Update authenticated user information";
+    public User updateUser(@SessionAttribute("user") String email,
+                             @RequestPart("fullName") String fullName,
+                             @RequestPart(value = "profilePicture", required = false) Part profilePicture,
+                             @RequestPart(value = "password", required = false) String password) throws SQLException, IOException {
+        if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email");
+        try (var stm = connection
+                .prepareStatement("UPDATE \"user\" SET full_name=?, profile_picture=?, password=? WHERE email=?");
+             var stm2 = connection.prepareStatement("SELECT password FROM \"user\" WHERE email=?")) {
+            stm2.setString(1, email);
+            ResultSet rst = stm2.executeQuery();
+            rst.next();
+            String encryptedPassword = password != null ? DigestUtils.sha256Hex(password):
+                    rst.getString("password");
+            String base64DataUrl = generateBase64DataUrl(profilePicture);
+            stm.setString(1, fullName);
+            stm.setString(2, base64DataUrl);
+            stm.setString(3, encryptedPassword);
+            stm2.executeUpdate();
+            return new User(fullName, email, encryptedPassword, base64DataUrl);
+        }
+    }
+    private String generateBase64DataUrl(Part part) throws IOException {
+        byte[] bytes = part.getInputStream().readAllBytes();
+        String mimeType = part.getContentType();
+        String base64Data = Base64.getEncoder().encodeToString(bytes);
+        return "data:" + mimeType + ";base64," + base64Data;
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
