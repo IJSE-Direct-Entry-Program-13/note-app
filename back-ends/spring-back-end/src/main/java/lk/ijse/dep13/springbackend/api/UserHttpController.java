@@ -9,7 +9,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/users")
@@ -40,8 +42,18 @@ public class UserHttpController {
     }
 
     @GetMapping("/me")
-    public String getUserInfo() {
-        return "Get authenticated user information";
+    public User getUserInfo(@SessionAttribute(value = "user", required = false) String email) throws SQLException {
+        if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email");
+        try(var stm = connection.prepareStatement("SELECT * FROM \"user\" WHERE email=?")){
+            stm.setString(1, email);
+            ResultSet rst = stm.executeQuery();
+            rst.next();
+            return new User(rst.getString("full_name"),
+                    email,
+                    rst.getString("password"),
+                    Objects.requireNonNullElse(rst.getString("profile_picture"),
+                            User.DEFAULT_PROFILE_PICTURE));
+        }
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
