@@ -59,7 +59,6 @@ public class UserHttpController {
         }
     }
 
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PatchMapping("/me")
     public User updateUser(@SessionAttribute("user") String email,
                              @RequestPart("fullName") String fullName,
@@ -74,12 +73,14 @@ public class UserHttpController {
             rst.next();
             String encryptedPassword = password != null ? DigestUtils.sha256Hex(password):
                     rst.getString("password");
-            String base64DataUrl = generateBase64DataUrl(profilePicture);
+            String base64DataUrl = profilePicture != null ? generateBase64DataUrl(profilePicture) : null;
             stm.setString(1, fullName);
             stm.setString(2, base64DataUrl);
             stm.setString(3, encryptedPassword);
-            stm2.executeUpdate();
-            return new User(fullName, email, encryptedPassword, base64DataUrl);
+            stm.setString(4, email);
+            stm.executeUpdate();
+            return new User(fullName, email, encryptedPassword,
+                    Objects.requireNonNullElse(base64DataUrl, User.DEFAULT_PROFILE_PICTURE));
         }
     }
     private String generateBase64DataUrl(Part part) throws IOException {
