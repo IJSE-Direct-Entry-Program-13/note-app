@@ -1,1 +1,31 @@
-<p>sign-in works!</p>
+<div class="h-screen flex justify-center items-center">
+  <main>
+    <h1 class="text-2xl font-bold">Note App Sign In</h1>
+    <p>Enter your login credentials to continue</p>
+    <div class="mt-6">
+      <label for="txt-email">Email</label>
+      <input class="border rounded w-full p-2 mt-1
+      placeholder-gray-600
+focus:outline-sky-800"
+             id="txt-email" type="email"
+             placeholder="Enter your email here">
+    </div>
+    <div class="mt-2">
+      <label for="txt-password">Password</label>
+      <input class="border rounded w-full p-2 mt-1
+      placeholder-gray-600
+focus:outline-sky-800"
+             id="txt-password" type="password"
+             placeholder="Enter your password here">
+    </div>
+    <div class="mt-4">
+      <button class="border px-3 py-1 rounded cursor-pointer
+hover:bg-sky-800 hover:text-white hover:border-black">Log in</button>
+    </div>
+    <div class="mt-4">
+      <a class="font-bold text-blue-700" routerLink="/sign-up">
+        Create account
+      </a>
+    </div>
+  </main>
+</div>
